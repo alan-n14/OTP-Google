@@ -10,20 +10,39 @@
     ::-webkit-scrollbar { height: 6px; width: 6px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     #cameraVideo { width:100%; max-height:420px; object-fit:contain; background:#111827; }
-    .scan-frame { position:absolute; inset:15%; border:3px solid #22c55e; border-radius:18px; pointer-events:none; box-shadow:0 0 0 9999px rgba(0,0,0,.18); }
+    .scan-frame { position:absolute; inset:15%; border:3px solid #22c55e; border-radius:18px; pointer-events:none; box-shadow:0 0 0 9999px rgba(0,0,0,.22); transition: all 0.2s ease; }
+    .scan-frame.success-flash { border-color: #4ade80; box-shadow: 0 0 0 9999px rgba(34, 197, 94, 0.25), inset 0 0 25px rgba(34, 197, 94, 0.6); }
+    
+    /* Animasi Modal */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop-in {
+      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen py-8 px-4 flex flex-col items-center">
   <div class="w-full max-w-2xl space-y-6">
 
-    <div class="bg-gradient-to-r from-red-700 to-red-900 text-white p-5 rounded-xl shadow-lg flex items-center gap-4">
-      <svg class="w-10 h-10 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 00-1 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-      <div>
-        <h1 class="text-2xl font-bold tracking-wide">Google Authenticator Decoder</h1>
-        <p class="text-red-100 text-sm mt-1">Pindai QR Code OTP melalui kamera atau unggah gambar</p>
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-700 to-red-900 text-white p-5 rounded-xl shadow-lg flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <svg class="w-10 h-10 text-red-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 00-1 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-wide">Google Authenticator Decoder</h1>
+          <p class="text-red-100 text-xs sm:text-sm mt-1">Pindai QR Code OTP melalui kamera atau unggah gambar</p>
+        </div>
       </div>
+      <!-- Tombol Mute/Unmute Suara -->
+      <button id="btnToggleSound" title="Suara Scan Aktif" class="p-2.5 bg-red-800/60 hover:bg-red-800 border border-red-400/30 rounded-lg text-red-100 transition-colors shrink-0">
+        <svg id="iconSoundOn" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <svg id="iconSoundOff" class="w-5 h-5 hidden text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+      </button>
     </div>
 
+    <!-- Section 1: Kamera -->
     <section class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
       <h2 class="text-lg font-bold text-gray-800 mb-2 border-b border-gray-100 pb-2">1. Scan Menggunakan Kamera</h2>
       <p class="text-xs text-gray-500 mb-4">Arahkan kamera ke QR Code migrasi Google Authenticator. Gunakan scan berulang untuk menambahkan beberapa QR secara bergantian.</p>
@@ -32,19 +51,19 @@
         <select id="cameraSelect" class="w-full border border-gray-300 rounded-lg p-2 text-sm bg-white">
           <option value="">Memeriksa kamera...</option>
         </select>
-        <button id="btnRefreshCameras" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold">Deteksi Kamera</button>
+        <button id="btnRefreshCameras" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold shrink-0">Deteksi Kamera</button>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-        <button id="btnScanOnce" class="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg">Scan Sekali</button>
-        <button id="btnScanContinuous" class="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg">Mulai Scan Berulang</button>
+        <button id="btnScanOnce" class="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm">Scan Sekali</button>
+        <button id="btnScanContinuous" class="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-sm">Mulai Scan Berulang</button>
       </div>
       <div class="relative overflow-hidden rounded-lg bg-gray-900">
         <video id="cameraVideo" autoplay muted playsinline></video>
         <div id="scanFrame" class="scan-frame hidden"></div>
       </div>
       <div class="flex flex-wrap gap-2 mt-3">
-        <button id="btnStopCamera" disabled class="px-4 py-2 bg-gray-200 text-gray-700 disabled:opacity-40 rounded-lg text-sm font-semibold">Hentikan Kamera</button>
+        <button id="btnStopCamera" disabled class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-40 rounded-lg text-sm font-semibold transition-colors">Hentikan Kamera</button>
         <span id="cameraStatus" class="text-sm text-gray-500 self-center">Kamera belum diaktifkan.</span>
       </div>
       <div class="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
@@ -52,6 +71,7 @@
       </div>
     </section>
 
+    <!-- Section 2: Upload -->
     <section class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
       <h2 class="text-lg font-bold text-gray-800 mb-2 border-b border-gray-100 pb-2">2. Upload QR Code</h2>
       <p class="text-xs text-gray-500 mb-4">Anda juga dapat memilih beberapa gambar QR Code sekaligus.</p>
@@ -63,6 +83,7 @@
       </div>
     </section>
 
+    <!-- Section 3: Tabel Hasil -->
     <section class="bg-white p-6 rounded-xl shadow-md border border-gray-200 relative">
       <div class="flex justify-between items-center mb-4 gap-3">
         <h2 class="text-lg font-bold text-gray-800">Daftar Akun Terekstrak</h2>
@@ -89,6 +110,57 @@
     <div class="text-center text-xs text-gray-400 mt-8">&copy; 2026 <strong>OPS TUTORIAL</strong> - Pemrosesan QR dilakukan secara lokal di browser.</div>
   </div>
 
+  <!-- MODAL NOTIFIKASI ELEGAN -->
+  <div id="scanModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-gray-900/75 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-pop-in">
+      <!-- Header Modal -->
+      <div id="modalHeaderBg" class="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-center text-white relative">
+        <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner ring-4 ring-white/30">
+          <svg id="modalIconSuccess" class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <svg id="modalIconInfo" class="w-9 h-9 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 id="modalTitle" class="text-xl font-extrabold tracking-tight">QR Code Berhasil Dipindai!</h3>
+        <p id="modalSubtitle" class="text-emerald-100 text-xs mt-1">Data kredensial OTP telah diekstrak dengan aman</p>
+      </div>
+
+      <!-- Body Modal -->
+      <div class="p-6">
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 text-center">
+            <span class="block text-[11px] uppercase tracking-wider font-bold text-emerald-700">Baru Ditambahkan</span>
+            <span id="modalAddedCount" class="text-2xl font-black text-emerald-600 mt-0.5 block">+0</span>
+            <span class="text-[11px] text-emerald-600/80">akun OTP</span>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-center">
+            <span class="block text-[11px] uppercase tracking-wider font-bold text-gray-500">Total Tersimpan</span>
+            <span id="modalTotalCount" class="text-2xl font-black text-gray-800 mt-0.5 block">0</span>
+            <span class="text-[11px] text-gray-500">akun OTP</span>
+          </div>
+        </div>
+
+        <p id="modalMessage" class="text-sm text-gray-600 text-center mb-6 leading-relaxed">
+          Apakah Anda ingin melanjutkan pemindaian QR Code berikutnya atau mengakhiri sesi scan?
+        </p>
+
+        <!-- Tombol Aksi Modal -->
+        <div class="flex flex-col sm:flex-row gap-2.5">
+          <button id="btnModalContinue" class="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Oke, Lanjutkan Scan
+          </button>
+          <button id="btnModalFinish" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 active:scale-[0.98] text-gray-700 font-bold rounded-xl transition-all text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Selesai Scan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/protobufjs/dist/protobuf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <script>
@@ -99,6 +171,8 @@
     let animationFrameId = null;
     let lastScannedText = "";
     let lastScannedAt = 0;
+    let soundEnabled = true;
+    let audioCtx = null;
 
     const video = document.getElementById("cameraVideo");
     const cameraSelect = document.getElementById("cameraSelect");
@@ -110,18 +184,155 @@
     const btnDownload = document.getElementById("btnDownload");
     const btnStopCamera = document.getElementById("btnStopCamera");
 
+    // Elemen Modal
+    const scanModal = document.getElementById("scanModal");
+    const modalHeaderBg = document.getElementById("modalHeaderBg");
+    const modalIconSuccess = document.getElementById("modalIconSuccess");
+    const modalIconInfo = document.getElementById("modalIconInfo");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalAddedCount = document.getElementById("modalAddedCount");
+    const modalTotalCount = document.getElementById("modalTotalCount");
+    const modalMessage = document.getElementById("modalMessage");
+    const btnModalContinue = document.getElementById("btnModalContinue");
+    const btnModalFinish = document.getElementById("btnModalFinish");
+
+    // Fungsi Suara Beep Scanner menggunakan Web Audio API
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function playScanBeep(isSuccess = true) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        if (isSuccess) {
+          // Nada beep sukses (2 nada naik harmonis)
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(1046.5, now); // C6
+          osc.frequency.setValueAtTime(1318.5, now + 0.09); // E6
+
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.26);
+        } else {
+          // Nada beep peringatan / duplikat
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.21);
+        }
+      } catch (e) {
+        console.warn("Audio gagal diputar:", e);
+      }
+    }
+
+    // Toggle Suara
+    document.getElementById("btnToggleSound").addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById("iconSoundOn").classList.toggle("hidden", !soundEnabled);
+      document.getElementById("iconSoundOff").classList.toggle("hidden", soundEnabled);
+      if (soundEnabled) playScanBeep(true);
+    });
+
+    // Tampilkan Modal Notifikasi
+    function showScanNotification(addedCount, totalCount, isDuplicateOrInvalid = false) {
+      scanFrame.classList.add("success-flash");
+      setTimeout(() => scanFrame.classList.remove("success-flash"), 400);
+
+      modalAddedCount.textContent = "+" + addedCount;
+      modalTotalCount.textContent = totalCount;
+
+      if (addedCount > 0) {
+        modalHeaderBg.className = "bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-center text-white relative";
+        modalIconSuccess.classList.remove("hidden");
+        modalIconInfo.classList.add("hidden");
+        modalTitle.textContent = "QR Code Berhasil Dipindai!";
+        modalSubtitle.className = "text-emerald-100 text-xs mt-1";
+        modalSubtitle.textContent = addedCount + " akun baru berhasil ditambahkan ke daftar.";
+        modalMessage.innerHTML = `Saat ini telah tersimpan sebanyak <strong class="text-gray-900">${totalCount} kode akun OTP</strong>. Klik <strong>Oke, Lanjutkan Scan</strong> untuk memindai QR berikutnya atau <strong>Selesai Scan</strong> jika sudah cukup.`;
+      } else {
+        modalHeaderBg.className = "bg-gradient-to-br from-amber-500 to-orange-600 p-6 text-center text-white relative";
+        modalIconSuccess.classList.add("hidden");
+        modalIconInfo.classList.remove("hidden");
+        modalTitle.textContent = "QR Sudah Terdaftar / Tidak Valid";
+        modalSubtitle.className = "text-amber-100 text-xs mt-1";
+        modalSubtitle.textContent = "Tidak ada akun baru yang ditambahkan.";
+        modalMessage.innerHTML = `Akun pada QR ini sudah ada di dalam daftar atau format tidak dikenali. Total tersimpan saat ini: <strong class="text-gray-900">${totalCount} kode akun OTP</strong>.`;
+      }
+
+      scanModal.classList.remove("hidden");
+      scanModal.classList.add("flex");
+    }
+
+    function hideScanNotification() {
+      scanModal.classList.add("hidden");
+      scanModal.classList.remove("flex");
+    }
+
+    // Tombol di dalam Modal
+    btnModalContinue.addEventListener("click", () => {
+      hideScanNotification();
+      lastScannedText = ""; // Reset agar bisa scan ulang jika diperlukan
+      if (cameraStream) {
+        scanMode = "continuous";
+        scanBusy = false;
+        cameraStatus.textContent = "Scan aktif. Arahkan kamera ke QR Code berikutnya.";
+      } else {
+        startCamera("continuous");
+      }
+    });
+
+    btnModalFinish.addEventListener("click", () => {
+      hideScanNotification();
+      stopCamera(false);
+      cameraStatus.textContent = "Selesai scan. Total " + extractedAccounts.length + " akun tersimpan.";
+    });
+
+    // Proses Upload File
     document.getElementById("fileInput").addEventListener("change", async function(evt) {
       const files = Array.from(evt.target.files || []);
       if (!files.length) return;
+      initAudio();
       showStatus("Memproses " + files.length + " gambar...");
+      const beforeTotal = extractedAccounts.length;
       let successful = 0;
+
       for (const file of files) {
         const added = await processFile(file);
         if (added) successful++;
       }
+
+      const newlyAdded = extractedAccounts.length - beforeTotal;
       updateUI();
       showStatus("Selesai. " + successful + " gambar berisi QR yang dikenali. Total akun: " + extractedAccounts.length);
       evt.target.value = "";
+
+      if (newlyAdded > 0) {
+        playScanBeep(true);
+      }
     });
 
     function showStatus(message) {
@@ -136,7 +347,6 @@
         return;
       }
       try {
-        // Meminta izin terlebih dahulu agar label perangkat dapat ditampilkan.
         if (!cameraStream) {
           const temp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           temp.getTracks().forEach(track => track.stop());
@@ -163,6 +373,7 @@
     }
 
     async function startCamera(mode) {
+      initAudio(); // Inisialisasi konteks audio saat interaksi klik user
       if (!window.isSecureContext) {
         cameraStatus.textContent = "Kamera memerlukan HTTPS atau localhost.";
         return;
@@ -232,10 +443,11 @@
 
     function handleCameraQR(qrText) {
       const now = Date.now();
-      // Hindari QR yang sama terbaca berkali-kali saat masih berada di depan kamera.
       if (qrText === lastScannedText && now - lastScannedAt < 2500) return;
       lastScannedText = qrText;
       lastScannedAt = now;
+      
+      // Jeda pemindaian sementara notifikasi tampil
       scanBusy = true;
 
       const before = extractedAccounts.length;
@@ -244,17 +456,15 @@
       const added = extractedAccounts.length - before;
 
       if (added > 0) {
+        playScanBeep(true);
         cameraStatus.textContent = "✓ QR berhasil ditambahkan. Total akun: " + extractedAccounts.length;
       } else {
+        playScanBeep(false);
         cameraStatus.textContent = "QR terbaca, tetapi akun sudah ada atau format tidak dikenali.";
       }
 
-      if (scanMode === "once") {
-        stopCamera(false);
-        cameraStatus.textContent = added > 0 ? "Scan sekali berhasil. Total akun: " + extractedAccounts.length : "QR tidak menghasilkan akun baru. Coba lagi.";
-      } else {
-        setTimeout(() => { scanBusy = false; }, 700);
-      }
+      // Tampilkan modal elegan dengan pilihan Lanjutkan Scan atau Selesai Scan
+      showScanNotification(added, extractedAccounts.length, added === 0);
     }
 
     document.getElementById("btnScanOnce").addEventListener("click", () => startCamera("once"));
@@ -370,7 +580,7 @@
         tableBody.innerHTML = "";
         extractedAccounts.forEach((acc, i) => {
           const tr = document.createElement("tr");
-          tr.className = "border-b border-gray-100 hover:bg-red-50";
+          tr.className = "border-b border-gray-100 hover:bg-red-50 transition-colors";
           const values = [String(i + 1), acc.label, acc.issuer, acc.secret];
           values.forEach((value, index) => {
             const td = document.createElement("td");
